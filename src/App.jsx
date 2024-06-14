@@ -1,110 +1,122 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
 function App() {
   const [state, setState] = useState({
-    leftArray: ["React", "HTML", "Vue", "CSS"],
-    rightArray: ["Angular", "TS", "JS", "Svelte"],
-    isLeftSelected: false,
-    isRightSelected: false
+    leftItems: { React: false, HTML: false, Vue: false, CSS: false },
+    rightItems: { Angular: false, TS: false, JS: false, Svelte: false },
   });
 
-  function handleRight() {
-    const selectedOptions = state.leftArray.filter((option, index) => document.getElementById(`leftCheckbox${index}`).checked);
-    setState(prevState => ({
-      leftArray: prevState.leftArray.filter(option => !selectedOptions.includes(option)),
-      rightArray: prevState.rightArray.concat(selectedOptions),
-      isLeftSelected: false,
-    }));
-    clearLeftCheckboxes();
+  function moveItems(check) {
+    if (check) {
+      const newList1 = { ...state.leftItems, ...state.rightItems };
+      setState({
+        leftItems: newList1,
+        rightItems: {},
+      });
+    } else {
+      const newList2 = { ...state.rightItems, ...state.leftItems };
+      setState({
+        leftItems: {},
+        rightItems: newList2,
+      });
+    }
   }
 
-  function handleLeft() {
-    const selectedOptions = state.rightArray.filter((option, index) => document.getElementById(`rightCheckbox${index}`).checked);
-    setState(prevState => ({
-      leftArray: prevState.leftArray.concat(selectedOptions),
-      rightArray: prevState.rightArray.filter(option => !selectedOptions.includes(option)),
-      isRightSelected: false,
-    }));
-    clearRightCheckboxes();
-  }
+  function toggleItems(check) {
+    let leftItems2, rightItems2;
+    if (check) {
+      const checkedItems = {};
+      const nonCheckedItems = {};
 
-  function handleMoveAllRight() {
-    setState(prevState => ({
-      leftArray: [],
-      rightArray: [...prevState.rightArray, ...prevState.leftArray],
-      isLeftSelected: false,
-    }));
-    clearLeftCheckboxes();
-  }
+      for (const [key, value] of Object.entries(state.rightItems)) {
+        if (value) {
+          checkedItems[key] = false;
+        } else {
+          nonCheckedItems[key] = value;
+        }
+      }
 
-  function handleMoveAllLeft() {
-    setState(prevState => ({
-      leftArray: [...prevState.leftArray, ...prevState.rightArray],
-      rightArray: [],
-      isRightSelected: false,
-    }));
-    clearRightCheckboxes();
-  }
+      leftItems2 = { ...state.leftItems, ...checkedItems };
+      rightItems2 = nonCheckedItems;
+    } else {
+      const checkedItems = {};
+      const nonCheckedItems = {};
 
-  function handleLeftCheckboxChange() {
-    const anyLeftChecked = state.leftArray.some((option, index) => document.getElementById(`leftCheckbox${index}`).checked);
-    setState(prevState => ({
-      ...prevState,
-      isLeftSelected: anyLeftChecked,
-    }));
-  }
+      for (const [key, value] of Object.entries(state.leftItems)) {
+        if (value) {
+          checkedItems[key] = false;
+        } else {
+          nonCheckedItems[key] = value;
+        }
+      }
 
-  function handleRightCheckboxChange() {
-    const anyRightChecked = state.rightArray.some((option, index) => document.getElementById(`rightCheckbox${index}`).checked);
-    setState(prevState => ({
-      ...prevState,
-      isRightSelected: anyRightChecked,
-    }));
-  }
-
-  function clearLeftCheckboxes() {
-    state.leftArray.forEach((option, index) => {
-      document.getElementById(`leftCheckbox${index}`).checked = false;
+      leftItems2 = nonCheckedItems;
+      rightItems2 = { ...state.rightItems, ...checkedItems };
+    }
+    setState({
+      leftItems: leftItems2,
+      rightItems: rightItems2,
     });
   }
 
-  function clearRightCheckboxes() {
-    state.rightArray.forEach((option, index) => {
-      document.getElementById(`rightCheckbox${index}`).checked = false;
-    });
+  function check(items) {
+    return Object.values(items).some((value) => value === true);
   }
+
+  const leftDisable = Object.keys(state.leftItems).length;
+  const rightDisable = Object.keys(state.rightItems).length;
 
   return (
     <>
       <h2>Transfer List</h2>
-      <div className='container'>
-        <section className='left-section'>
-          {state.leftArray.map((each_option, index) => (
-            <div key={index}>
-              <label htmlFor={`leftCheckbox${index}`}>
-                <input id={`leftCheckbox${index}`} type='checkbox' onChange={handleLeftCheckboxChange} />
-                {each_option}
-              </label>
-            </div>
+      <div className="container">
+        <section className="left-section">
+          {Object.keys(state.leftItems).map((item) => (
+            <label key={item}>
+              <input
+                checked={state.leftItems[item]}
+                type="checkbox"
+                onChange={() => {
+                  setState((prevState) => ({
+                    leftItems: {
+                      ...prevState.leftItems,
+                      [item]: !prevState.leftItems[item],
+                    },
+                    rightItems: { ...prevState.rightItems },
+                  }));
+                }}
+              />
+              {item}
+            </label>
           ))}
         </section>
-        <section className='manage-section'>
-          <button onClick={handleMoveAllRight} disabled={state.leftArray.length === 0}> &gt;&gt; </button>
+        <section className="manage-section">
+          <button onClick={() => moveItems(true)} disabled={rightDisable <= 0}> &lt;&lt; </button>
           <br />
-          <button onClick={handleRight} disabled={!state.isLeftSelected}> &gt; </button>
+          <button onClick={() => toggleItems(true)} disabled={!check(state.rightItems)}> &lt; </button>
           <br />
-          <button onClick={handleLeft} disabled={!state.isRightSelected}> &lt; </button>
+          <button onClick={() => toggleItems(false)} disabled={!check(state.leftItems)} > &gt; </button>
           <br />
-          <button onClick={handleMoveAllLeft} disabled={state.rightArray.length === 0}> &lt;&lt; </button>
+          <button onClick={() => moveItems(false)} disabled={leftDisable <= 0}> &gt;&gt; </button>
         </section>
-        <section className='right-section'>
-          {state.rightArray.map((each_option, index) => (
-            <div key={index}>
-              <label htmlFor={`rightCheckbox${index}`}>
-                <input id={`rightCheckbox${index}`} type='checkbox' onChange={handleRightCheckboxChange} />
-                {each_option}
-              </label>
-            </div>
+        <section className="right-section">
+          {Object.keys(state.rightItems).map((item) => (
+            <label key={item}>
+              <input
+                checked={state.rightItems[item]}
+                type="checkbox"
+                onChange={() => {
+                  setState((prevState) => ({
+                    leftItems: { ...prevState.leftItems },
+                    rightItems: {
+                      ...prevState.rightItems,
+                      [item]: !prevState.rightItems[item],
+                    },
+                  }));
+                }}
+              />
+              {item}
+            </label>
           ))}
         </section>
       </div>

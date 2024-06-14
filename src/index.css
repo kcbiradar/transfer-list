@@ -24,3 +24,13 @@ h2 {
 body {
   font-family: sans-serif;
 }
+
+.right-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.left-section {
+  display: flex;
+  flex-direction: column;
+}
